@@ -4,8 +4,7 @@ import sys
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
-from keras.layers import Lambda
-from keras.layers.merge import concatenate
+from keras.layers import Concatenate, Lambda
 from keras.models import Model
 
 from ..utils import compose
@@ -28,8 +27,7 @@ def space_to_depth_x2(x):
     """Thin wrapper for Tensorflow space_to_depth with block_size=2."""
     # Import currently required to make Lambda work.
     # See: https://github.com/fchollet/keras/issues/5088#issuecomment-273851273
-    import tensorflow as tf
-    return tf.space_to_depth(x, block_size=2)
+    return tf.nn.space_to_depth(x, block_size=2)
 
 
 def space_to_depth_x2_output_shape(input_shape):
@@ -57,7 +55,7 @@ def yolo_body(inputs, num_anchors, num_classes):
         output_shape=space_to_depth_x2_output_shape,
         name='space_to_depth')(conv21)
 
-    x = concatenate([conv21_reshaped, conv20])
+    x = Concatenate([conv21_reshaped, conv20])
     x = DarknetConv2D_BN_Leaky(1024, (3, 3))(x)
     x = DarknetConv2D(num_anchors * (num_classes + 5), (1, 1))(x)
     return Model(inputs, x)
@@ -141,7 +139,7 @@ def yolo_boxes_to_corners(box_xy, box_wh):
     box_mins = box_xy - (box_wh / 2.)
     box_maxes = box_xy + (box_wh / 2.)
 
-    return K.concatenate([
+    return K.Concatenate([
         box_mins[..., 1:2],  # y_min
         box_mins[..., 0:1],  # x_min
         box_maxes[..., 1:2],  # y_max
@@ -206,7 +204,7 @@ def yolo_loss(args,
         -1, yolo_output_shape[1], yolo_output_shape[2], num_anchors,
         num_classes + 5
     ])
-    pred_boxes = K.concatenate(
+    pred_boxes = K.Concatenate(
         (K.sigmoid(feats[..., 0:2]), feats[..., 2:4]), axis=-1)
 
     # TODO: Adjust predictions by image width/height for non-square images?

@@ -149,7 +149,7 @@ if not os.path.exists(output_path):
     print('Creating output path {}'.format(output_path))
     os.mkdir(output_path)
 
-sess = K.get_session()  # TODO: Remove dependence on Tensorflow session.
+sess = K.clear_session()  # Limpiar la sesión actual.
 
 with open(classes_path) as f:
     class_names = f.readlines()
